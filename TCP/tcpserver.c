@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
   clientlen = sizeof(clientaddr);
   while (1) {
 
-    /* 
+    /*  
      *accept: wait for a connection request 
      */
     childfd = accept(parentfd, (struct sockaddr *) &clientaddr, &clientlen);
