@@ -1,7 +1,7 @@
 /* 
- * tcpclient.c - A simple TCP client
- * Usage: ./tcpclient <host> <port>
- * Example: ./tcpclient localhost 8080
+ * udpclient.c - A simple UDP client
+ * Usage: ./udpclient <host> <port>
+ * Example: ./udpclient localhost 8080
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,6 +24,7 @@ void error(char *msg) {
 
 int main(int argc, char **argv) {
     int sockfd, portno, n;
+    int serverlen;
     struct sockaddr_in serveraddr;
     struct hostent *server;
     char *hostname;
@@ -38,7 +39,7 @@ int main(int argc, char **argv) {
     portno = atoi(argv[2]);
 
     /*socket: create the socket*/
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) 
         error("ERROR opening socket");
 
@@ -56,26 +57,21 @@ int main(int argc, char **argv) {
 	  (char *)&serveraddr.sin_addr.s_addr, server->h_length);
     serveraddr.sin_port = htons(portno);
 
-    /*connect: create a connection with the server*/
-    if (connect(sockfd, &serveraddr, sizeof(serveraddr)) < 0) 
-      error("ERROR connecting");
-
-    /*Get message line from the user*/
-    printf("Please enter msg: ");
+    /*Get a message from the user*/
     bzero(buf, BUFSIZE);
+    printf("Please enter msg: ");
     fgets(buf, BUFSIZE, stdin);
 
-    /*Send the message line to the server*/
-    n = write(sockfd, buf, strlen(buf));
+    /*Send the message to the server*/
+    serverlen = sizeof(serveraddr);
+    n = sendto(sockfd, buf, strlen(buf), 0, &serveraddr, serverlen);
     if (n < 0) 
-      error("ERROR writing to socket");
-
+      error("ERROR in sendto");
+    
     /*Print the server's reply*/
-    bzero(buf, BUFSIZE);
-    n = read(sockfd, buf, BUFSIZE);
+    n = recvfrom(sockfd, buf, strlen(buf), 0, &serveraddr, &serverlen);
     if (n < 0) 
-      error("ERROR reading from socket");
+      error("ERROR in recvfrom");
     printf("Echo from server: %s", buf);
-    close(sockfd);
     return 0;
 }

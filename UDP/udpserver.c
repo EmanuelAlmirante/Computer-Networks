@@ -1,7 +1,7 @@
 /* 
- * tcpserver.c - A simple TCP echo server 
- * Usage: ./tcpserver <port>
- * Example: ./tcpserver 8080
+ * udpserver.c - A simple UDP echo server 
+ * Usage: ./udpserver <port>
+ * Example: ./udpserver 8080
  */
 
 #include <stdio.h>
@@ -25,14 +25,13 @@ void error(char *msg) {
 }
 
 int main(int argc, char **argv) {
-  int parentfd; /*Parent socket*/
-  int childfd; /*Child socket*/
+  int sockfd; /*Socket*/
   int portno; /*Port to listen on*/
   int clientlen; /*Byte size of client's address*/
   struct sockaddr_in serveraddr; /*Server's addr*/
   struct sockaddr_in clientaddr; /*Client addr*/
   struct hostent *hostp; /*Client host info*/
-  char buf[BUFSIZE]; /*Message buffer*/
+  char buf[BUFSIZE]; /*Message buf*/
   char *hostaddrp; /*Dotted decimal host addr string*/
   int optval; /*Flag value for setsockopt*/
   int n; /*Message byte size*/
@@ -47,64 +46,53 @@ int main(int argc, char **argv) {
   portno = atoi(argv[1]);
 
   /* 
-   *Socket: create the parent socket 
+   *socket: create the parent socket 
    */
-  parentfd = socket(AF_INET, SOCK_STREAM, 0);
-  if (parentfd < 0) 
+  sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+  if (sockfd < 0) 
     error("ERROR opening socket");
 
   /*setsockopt: Handy debugging trick that lets 
    *us rerun the server immediately after we kill it; 
-   *otherwise we would have to wait about 20 secs. 
+   *otherwise we have to wait about 20 secs. 
    *Eliminates "ERROR on binding: Address already in use" error. 
    */
   optval = 1;
-  setsockopt(parentfd, SOL_SOCKET, SO_REUSEADDR, 
+  setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, 
 	     (const void *)&optval , sizeof(int));
 
   /*
    *Build the server's Internet address
    */
   bzero((char *) &serveraddr, sizeof(serveraddr));
-
-  /*This is an Internet address*/
   serveraddr.sin_family = AF_INET;
-
-  /*Let the system figure out our IP address*/
   serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-  /*This is the port we will listen on*/
   serveraddr.sin_port = htons((unsigned short)portno);
 
   /* 
    *bind: associate the parent socket with a port 
    */
-  if (bind(parentfd, (struct sockaddr *) &serveraddr, 
+  if (bind(sockfd, (struct sockaddr *) &serveraddr, 
 	   sizeof(serveraddr)) < 0) 
     error("ERROR on binding");
 
   /* 
-   *listen: make this socket ready to accept connection requests 
-   */
-  if (listen(parentfd, 5) < 0) /* allow 5 requests to queue up */ 
-    error("ERROR on listen");
-
-  /* 
-   *Main loop: wait for a connection request, echo input line, 
-   * then close connection.
+   *Main loop: wait for a datagram, then echo it
    */
   clientlen = sizeof(clientaddr);
   while (1) {
 
-    /* 
-     *accept: wait for a connection request 
+    /*
+     *recvfrom: receive a UDP datagram from a client
      */
-    childfd = accept(parentfd, (struct sockaddr *) &clientaddr, &clientlen);
-    if (childfd < 0) 
-      error("ERROR on accept");
-    
+    bzero(buf, BUFSIZE);
+    n = recvfrom(sockfd, buf, BUFSIZE, 0,
+		 (struct sockaddr *) &clientaddr, &clientlen);
+    if (n < 0)
+      error("ERROR in recvfrom");
+
     /* 
-     *gethostbyaddr: determine who sent the message 
+     *gethostbyaddr: determine who sent the datagram
      */
     hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, 
 			  sizeof(clientaddr.sin_addr.s_addr), AF_INET);
@@ -113,25 +101,16 @@ int main(int argc, char **argv) {
     hostaddrp = inet_ntoa(clientaddr.sin_addr);
     if (hostaddrp == NULL)
       error("ERROR on inet_ntoa\n");
-    printf("server established connection with %s (%s)\n", 
+    printf("server received datagram from %s (%s)\n", 
 	   hostp->h_name, hostaddrp);
+    printf("server received %d/%d bytes: %s", strlen(buf), n, buf);
     
     /* 
-     *read: read input string from the client
+     *sendto: echo the input back to the client 
      */
-    bzero(buf, BUFSIZE);
-    n = read(childfd, buf, BUFSIZE);
+    n = sendto(sockfd, buf, strlen(buf), 0, 
+	       (struct sockaddr *) &clientaddr, clientlen);
     if (n < 0) 
-      error("ERROR reading from socket");
-    printf("server received %d bytes: %s", n, buf);
-    
-    /* 
-     *write: echo the input string back to the client 
-     */
-    n = write(childfd, buf, strlen(buf));
-    if (n < 0) 
-      error("ERROR writing to socket");
-
-    close(childfd);
+      error("ERROR in sendto");
   }
 }
