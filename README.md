@@ -4,11 +4,11 @@ This repository hosts the project of the course of Computer Networks.
 
 ## Table of Contents
 
-- [Objetives]()
-- [How It Works]()
-- [Start Server and Client]()
-- [Example]()
-- [Compilation]()
+- [Objetives](https://github.com/EmanuelAlmirante/Computer-Networks/blob/master/README.md#objectives)
+- [How It Works](https://github.com/EmanuelAlmirante/Computer-Networks/blob/master/README.md#how-it-works)
+- [Start Server and Client](https://github.com/EmanuelAlmirante/Computer-Networks/blob/master/README.md#start-server-and-client)
+- [Example](https://github.com/EmanuelAlmirante/Computer-Networks/blob/master/README.md#example)
+- [Compilation](https://github.com/EmanuelAlmirante/Computer-Networks/blob/master/README.md#compilation)
 
 ## Objectives
 
