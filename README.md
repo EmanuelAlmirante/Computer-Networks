@@ -25,19 +25,19 @@ The server stays up until it is stopped, while the client sends a message to the
 ## Start Server and Client
 
 **UDP Server:**
-- ./udpserver <port>
+- ./udpserver < port >
   - Example -> ./udpserver 8080
   
 **UDP Client:**
-- ./udpclient <host> <port>
+- ./udpclient < host > < port >
   - Example -> ./udpclient localhost 8080
   
 **TCP Server:**
-- ./tcpserver <port>
+- ./tcpserver < port >
   - Example -> ./tcpserver 8080
   
 **TCP Client:**
-- ./tcpclient <host> <port>
+- ./tcpclient < host > < port >
   - Example -> ./tcpclient localhost 8080
   
 ## Example
